@@ -201,10 +201,14 @@ class Texture0:
 
 
 def t64conv(path: Path, to_png: bool=False):
+    if not path.exists():
+        print(f"ERROR: path '{path}' don't exist!")
+        sys.exit(1)
+
     t64 = Texture64.from_bytes(path)
 
     if t64.palette_len != 0:
-        print("WARNING: CI textures are not supported yet, ignoring.")
+        print(f"WARNING: CI textures are not supported yet, ignoring. ({path})")
         return
 
     tex0 = t64.to_tex0()
@@ -225,35 +229,53 @@ def main():
     parser.add_argument("-m", "--mode", dest="mode", help="Operating mode, either 'T64' (to TEX0) or 'TEX0' (to T64), case doesn't matter.", required=False)
     parser.add_argument("-p", "--to_png", dest="to_png", action="store_true", help="Convert file to PNG", required=False, default=True)
     parser.add_argument("-o", "--output", dest="output", help="Set output folder", required=False, default=OUTPUT_FOLDER)
+    parser.add_argument("-f", "--folder", dest="folder", help="Process all T64 files from provided folder", required=False)
 
     args = parser.parse_args()
-
-    try:
-        path = Path(args.file).resolve()
-    except:
-        print("ERROR: something went wrong...")
-        sys.exit(1)
-
-    if not path.exists():
-        print(f"ERROR: path '{path}' don't exist!")
 
     if args.output is not None:
         OUTPUT_FOLDER = Path(args.output).resolve()
 
     OUTPUT_FOLDER.mkdir(exist_ok=True)
 
-    if args.mode is not None:
-        match args.mode.lower():
-            case "t64":
-                t64conv(path)
-            case "tex0":
-                print("ERROR: not supported yet.")
-                sys.exit(1)
-            case _:
-                print(f"ERROR: operating mode not supported: '{args.mode}'")
-                sys.exit(0)
-    elif args.to_png:
-        t64conv(path, True)
+    if args.file is not None:
+        try:
+            path = Path(args.file).resolve()
+        except:
+            print("ERROR: something went wrong...")
+            sys.exit(1)
+
+        if not path.exists():
+            print(f"ERROR: path '{path}' don't exist!")
+            sys.exit(1)
+
+        if args.mode is not None:
+            match args.mode.lower():
+                case "t64":
+                    t64conv(path)
+                case "tex0":
+                    print("ERROR: not supported yet.")
+                    sys.exit(1)
+                case _:
+                    print(f"ERROR: operating mode not supported: '{args.mode}'")
+                    sys.exit(0)
+        elif args.to_png:
+            t64conv(path, True)
+    elif args.folder is not None:
+        in_dir = Path(args.folder).resolve()
+
+        if not in_dir.exists():
+            print(f"ERROR: path '{in_dir}' don't exist!")
+            sys.exit(1)
+
+        t64_to_process: list[Path] = []
+        for dirpath, dirnames, filenames in in_dir.walk():
+            for filename in filenames:
+                if filename.endswith(".T64"):
+                    t64_to_process.append(Path(dirpath) / filename)
+
+        for t64_path in t64_to_process:
+            t64conv(t64_path, True)
 
 
 if __name__ == "__main__":
