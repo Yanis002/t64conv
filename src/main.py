@@ -218,10 +218,13 @@ def t64conv(path: Path, to_png: bool=False):
 
 
 def main():
+    global OUTPUT_FOLDER
+
     parser = argparse.ArgumentParser(description="Tool to convert T64 files to TEX0 format and can convert back to PNG.")
     parser.add_argument("file", nargs="?", help="Path to the base file")
     parser.add_argument("-m", "--mode", dest="mode", help="Operating mode, either 'T64' (to TEX0) or 'TEX0' (to T64), case doesn't matter.", required=False)
     parser.add_argument("-p", "--to_png", dest="to_png", action="store_true", help="Convert file to PNG", required=False, default=True)
+    parser.add_argument("-o", "--output", dest="output", help="Set output folder", required=False, default=OUTPUT_FOLDER)
 
     args = parser.parse_args()
 
@@ -233,6 +236,9 @@ def main():
 
     if not path.exists():
         print(f"ERROR: path '{path}' don't exist!")
+
+    if args.output is not None:
+        OUTPUT_FOLDER = Path(args.output).resolve()
 
     OUTPUT_FOLDER.mkdir(exist_ok=True)
 
